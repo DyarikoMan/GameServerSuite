@@ -4,5 +4,7 @@ namespace ContainerManager.Domain.Interfaces;
 
 public interface IContainerService
 {
-      Task<string> StartContainerAsync(ContainerInstance container);
+      Task<bool> StartContainerAsync(string containerId);
+      Task<bool> StopContainerAsync(string containerId);
+      Task<List<ContainerInfo>> ListContainersAsync(string imageFilter = null);
 }

@@ -3,6 +3,8 @@ using ContainerManager.Infrastructure.Docker;
 using MediatR;
 using Microsoft.AspNetCore.Mvc;
 using ContainerManager.Application.Commands;
+using ContainerManager.Domain.Interfaces;
+using ContainerManager.Application.Queries;
 
 namespace ContainerManager.Api.Controllers
 {
@@ -13,32 +15,32 @@ namespace ContainerManager.Api.Controllers
         private readonly IMediator _mediator;
         private readonly DockerService _docker; //temp
 
-        public ContainersController(IMediator mediator, DockerService docker)
+        public ContainersController(IMediator mediator)
         {
             _mediator = mediator;
-            _docker = docker; //temp
         }
 
-        [HttpPost("start")]
-        public async Task<IActionResult> Start([FromBody] StartContainerCommand command)
+        [HttpPost("start/{id}")]
+        public async Task<IActionResult> StartContainer(string id)
         {
-            var containerId = await _mediator.Send(command);
-            return Ok(new { ContainerId = containerId });
+            var containerId = await _mediator.Send(new StartContainerCommand(id));
+            return Ok(new { containerId });
         }
 
-        [HttpPost("stop")]
-        public async Task<IActionResult> Stop([FromBody] string id)
+        [HttpPost("stop/{id}")]
+        public async Task<IActionResult> StopContainer(string id)
         {
-            var success = await _docker.StopContainerAsync(id);
-            return Ok(new { Stopped = success });
+            var stopped = await _mediator.Send(new StopContainerCommand(id));
+            return Ok(new { stopped });
         }
 
         [HttpGet("list")]
-        public async Task<IActionResult> List()
+        public async Task<IActionResult> ListContainers([FromQuery] string? imageFilter)
         {
-            var containers = await _docker.ListContainersAsync();
+            var containers = await _mediator.Send(new ListContainersQuery(imageFilter));
             return Ok(containers);
         }
+
 
         [HttpGet("stats/{id}")]
         public async Task<IActionResult> Stats(string id)

@@ -4,7 +4,7 @@ using Docker.DotNet;
 using Docker.DotNet.Models;
 using ContainerManager.Domain.Interfaces;
 using ContainerManager.Domain.Entities;
-using ContainerManager.Infrastructure.Docker.Mappers;
+//using ContainerManager.Infrastructure.Docker.Mappers;
 
 
 namespace ContainerManager.Infrastructure.Docker;
@@ -18,65 +18,67 @@ public class DockerService : IContainerService
         _client = new DockerClientConfiguration(new Uri("unix:///var/run/docker.sock")).CreateClient();
     }
 
-    public async Task<string> StartContainerAsync(ContainerInstance container)
+    public async Task<bool> StartContainerAsync(string containerId)
     {
-        var createParams = new CreateContainerParameters
+        try
         {
-            Image = container.Image,
-            Name = container.Name,
-            Tty = true,
-
-            HostConfig = new HostConfig
-            {
-                AutoRemove = container.AutoRemove,
-                Memory = container.Ram.ValueInMb * 1024 * 1024,
-                NanoCPUs = (long)(container.Cpu.Cores * 1_000_000_000),
-                RestartPolicy = new RestartPolicy
-                {
-                    Name = container.RestartPolicy.ToDockerKind()
-                }
-            }
-        };
-
-        var response = await _client.Containers.CreateContainerAsync(createParams);
-
-        bool started = await _client.Containers.StartContainerAsync(response.ID, null);
-        if (!started)
-            throw new Exception($"❌ فشل تشغيل الكونتينر: {container.Name}");
-
-        return response.ID;
+            return await _client.Containers.StartContainerAsync(containerId, null);
+        }
+        catch(Exception ex) 
+        {
+            Console.WriteLine($"❌ Failed to start container {containerId}: {ex.Message}");
+            return false;
+        }
     }
 
 
-    public async Task<bool> StopContainerAsync(string id)
+    public async Task<bool> StopContainerAsync(string containerId)
     {
-        return await _client.Containers.StopContainerAsync(id, new ContainerStopParameters());
+        try
+        {
+            return await _client.Containers.StopContainerAsync(containerId, new ContainerStopParameters());
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"❌ Failed to stop container {containerId}: {ex.Message}");
+            return false;
+        }
     }
 
-    public async Task<IEnumerable<object>> ListContainersAsync(bool all = true)
-    {
-        var containers = await _client.Containers.ListContainersAsync(new ContainersListParameters
-        {
-            All = all,
-            Size = true
-        });
 
-        return containers
-            .Where(c => c.Image == "sm64coopdx_server") // ✅ Filter only SM64 containers
-            .Select(c => new
+    public async Task<List<ContainerInfo>> ListContainersAsync(string imageFilter = null)
+    {
+        try
+        {
+            var containers = await _client.Containers.ListContainersAsync(new ContainersListParameters
             {
-                c.ID,
-                Name = c.Names.FirstOrDefault()?.Trim('/'),
-                c.Image,
-                c.ImageID,
-                c.Status,
-                c.State,
-                SizeRw = c.SizeRw,
-                SizeRootFs = c.SizeRootFs,
-                Ports = c.Ports.Select(p => $"{p.PublicPort}->{p.PrivatePort}/{p.Type}").ToList(),
-                Mounts = c.Mounts.Select(m => $"{m.Source} -> {m.Destination}").ToList(),
-                Created = c.Created.ToLocalTime()
+                All = true,
+                Size = true
             });
+
+            return containers
+                .Where(c => imageFilter == null || c.Image == imageFilter)
+                .Select(c => new ContainerInfo
+                {
+                    Id = c.ID,
+                    Name = c.Names.FirstOrDefault()?.Trim('/'),
+                    Image = c.Image,
+                    ImageId = c.ImageID,
+                    Status = c.Status,
+                    State = c.State,
+                    SizeRw = c.SizeRw,
+                    SizeRootFs = c.SizeRootFs,
+                    Ports = c.Ports.Select(p => $"{p.PublicPort}->{p.PrivatePort}/{p.Type}").ToList(),
+                    Mounts = c.Mounts.Select(m => $"{m.Source} -> {m.Destination}").ToList(),
+                    Created = c.Created.ToLocalTime()
+                })
+                .ToList();
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"❌ Failed to list containers: {ex.Message}");
+            return new List<ContainerInfo>(); // Or consider rethrowing
+        }
     }
 
 
