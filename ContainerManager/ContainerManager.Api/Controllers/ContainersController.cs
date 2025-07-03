@@ -1,10 +1,12 @@
 using ContainerManager.Api.Models;
+using ContainerManager.Application.Commands;
+using ContainerManager.Application.Dtos;
+using ContainerManager.Application.Queries;
+using ContainerManager.Application.Queries.GetContainerStats;
+using ContainerManager.Domain.Interfaces;
 using ContainerManager.Infrastructure.Docker;
 using MediatR;
 using Microsoft.AspNetCore.Mvc;
-using ContainerManager.Application.Commands;
-using ContainerManager.Domain.Interfaces;
-using ContainerManager.Application.Queries;
 
 namespace ContainerManager.Api.Controllers
 {
@@ -20,10 +22,20 @@ namespace ContainerManager.Api.Controllers
             _mediator = mediator;
         }
 
-        [HttpPost("start/{id}")]
-        public async Task<IActionResult> StartContainer(string id)
+        [HttpPost("start")]
+        public async Task<IActionResult> StartContainer([FromBody] StartContainerRequest request)
         {
-            var containerId = await _mediator.Send(new StartContainerCommand(id));
+            var command = new StartContainerCommand(request);
+
+            string containerId = await _mediator.Send(command);
+
+            return Ok(new { ContainerId = containerId });
+        }
+
+        [HttpPost("resume/{id}")]
+        public async Task<IActionResult> ResumeContainer(string id)
+        {
+            var containerId = await _mediator.Send(new ResumeContainerCommand(id));
             return Ok(new { containerId });
         }
 
@@ -41,20 +53,43 @@ namespace ContainerManager.Api.Controllers
             return Ok(containers);
         }
 
-
         [HttpGet("stats/{id}")]
-        public async Task<IActionResult> Stats(string id)
+        public async Task<IActionResult> GetStats(string id)
         {
-            var stats = await _docker.GetContainerStatsAsync(id);
+            var stats = await _mediator.Send(new GetContainerStatsQuery(id));
 
-            return Ok(new
+            var dto = new ContainerStatsDto
             {
-                MemoryUsageMB = stats.MemoryStats.Usage / 1024 / 1024,
-                MemoryLimitMB = stats.MemoryStats.Limit / 1024 / 1024,
-                stats.Read,
-                stats.PidsStats,
-                stats.CPUStats
-            });
+                MemoryUsage = stats.MemoryUsage,
+                MemoryLimit = stats.MemoryLimit,
+                CpuTotalUsage = stats.CpuTotalUsage,
+                CpuSystemUsage = stats.CpuSystemUsage,
+                CpuCores = stats.CpuCores,
+                NetworkRxBytes = stats.NetworkRxBytes,
+                NetworkTxBytes = stats.NetworkTxBytes
+            };
+
+            return Ok(dto);
+        }
+
+        [HttpDelete("{id}")]
+        public async Task<IActionResult> RemoveContainer(string id)
+        {
+            var containerId = await _mediator.Send(new RemoveContainerCommand(id));
+            return Ok(new { containerId });
+        }
+
+        [HttpPost("load")]
+        public async Task<IActionResult> LoadImage([FromBody] string tarFile)
+        {
+            var imagesPath = Path.Combine(AppContext.BaseDirectory, "Resources", "Images");
+            var tarPath = Path.Combine(imagesPath, tarFile);
+
+            if (!System.IO.File.Exists(tarPath))
+                return NotFound($"TAR file not found: {tarFile}");
+
+            var name = await _mediator.Send(new LoadImageQuery(tarPath));
+            return Ok(new { ImageName = name });
         }
 
         [HttpGet("images/files")]
@@ -62,42 +97,6 @@ namespace ContainerManager.Api.Controllers
         {
             var imageFiles = _docker.ListAvailableTarImages();
             return Ok(imageFiles);
-        }
-
-        [HttpPost("images/run")]
-        public async Task<IActionResult> LoadImageAndStartContainer([FromBody] StartImageRequest req)
-        {
-            var imagesPath = Path.Combine(AppContext.BaseDirectory, "Resources", "Images");
-            var tarPath = Path.Combine(imagesPath, req.TarFile);
-
-            if (!System.IO.File.Exists(tarPath))
-                return NotFound($"TAR file not found: {req.TarFile}");
-
-            var containerBaseDir = Path.Combine(AppContext.BaseDirectory, "Resources", "Containers");
-
-            var containerId = await _docker.LoadImageAndStartContainerAsync(
-                tarPath,
-                containerBaseDir,
-                req.Name,
-                req.Port,
-                req.RamMb,
-                req.Cpu,
-                req.AutoRemove,
-                req.RestartPolicy
-            );
-
-            return Ok(new { ContainerId = containerId });
-        }
-
-        [HttpDelete("{id}")]
-        public async Task<IActionResult> DeleteContainer(string id)
-        {
-            var result = await _docker.RemoveContainerAndCleanupAsync(id);
-
-            if (result)
-                return Ok(new { message = "Container deleted successfully." });
-            else
-                return NotFound(new { error = "Container not found." });
         }
 
 

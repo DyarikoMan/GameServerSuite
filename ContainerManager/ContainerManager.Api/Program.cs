@@ -11,7 +11,7 @@ builder.Services.AddSwaggerGen();
 
 builder.Services.AddMediatR(cfg =>
 {
-    cfg.RegisterServicesFromAssemblyContaining<StartContainerCommand>();
+    cfg.RegisterServicesFromAssemblyContaining<ResumeContainerCommand>();
 });
 
 

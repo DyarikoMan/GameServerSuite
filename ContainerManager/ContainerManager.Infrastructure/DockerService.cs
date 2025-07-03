@@ -1,10 +1,13 @@
-﻿using System.Net;
-using System.Net.Sockets;
+﻿using ContainerManager.Domain.Entities;
+using ContainerManager.Domain.Interfaces;
+using ContainerManager.Domain.ValueObjects;
+using ContainerManager.Infrastructure.Docker.Mappers;
 using Docker.DotNet;
 using Docker.DotNet.Models;
-using ContainerManager.Domain.Interfaces;
-using ContainerManager.Domain.Entities;
-//using ContainerManager.Infrastructure.Docker.Mappers;
+using SharpCompress.Archives.Tar;
+using System.Net;
+using System.Net.Sockets;
+using System.Text.Json;
 
 
 namespace ContainerManager.Infrastructure.Docker;
@@ -18,7 +21,7 @@ public class DockerService : IContainerService
         _client = new DockerClientConfiguration(new Uri("unix:///var/run/docker.sock")).CreateClient();
     }
 
-    public async Task<bool> StartContainerAsync(string containerId)
+    public async Task<bool> ResumeContainerAsync(string containerId)
     {
         try
         {
@@ -82,13 +85,13 @@ public class DockerService : IContainerService
     }
 
 
-    public async Task<ContainerStatsResponse> GetContainerStatsAsync(string containerId)
+    public async Task<ContainerStats> GetContainerStatsAsync(string containerId)
     {
-        ContainerStatsResponse? latest = null;
+        ContainerStatsResponse? dockerStats = null;
 
         var progress = new Progress<ContainerStatsResponse>(stats =>
         {
-            latest = stats;
+            dockerStats = stats;
         });
 
         await _client.Containers.GetContainerStatsAsync(
@@ -98,7 +101,79 @@ public class DockerService : IContainerService
             CancellationToken.None
         );
 
-        return latest!;
+        if (dockerStats == null)
+            throw new Exception($"❌ Failed to fetch stats for container {containerId}");
+
+        var cpuStats = dockerStats.CPUStats;
+        var memStats = dockerStats.MemoryStats;
+        var networks = dockerStats.Networks ?? new Dictionary<string, NetworkStats>();
+
+        return new ContainerStats
+        {
+            MemoryUsage = memStats.Usage,
+            MemoryLimit = memStats.Limit,
+            CpuTotalUsage = cpuStats.CPUUsage?.TotalUsage ?? 0,
+            CpuSystemUsage = cpuStats.SystemUsage,
+            CpuCores = cpuStats.OnlineCPUs,
+            NetworkRxBytes = networks.Values.Aggregate(0UL, (total, n) => total + n.RxBytes),
+            NetworkTxBytes = networks.Values.Aggregate(0UL, (total, n) => total + n.TxBytes),
+        };
+    }
+
+    public async Task<string> StartContainerAsync(ContainerInstance instance)
+    {
+        var containerName = instance.Name;
+        int port = instance.Port == 0 ? GetFreeUdpPort() : instance.Port;
+        int ramMb = instance.Ram?.ValueInMb ?? 512;
+        long memBytes = ramMb * 1024L * 1024L;
+        double cpuCores = instance.Cpu?.Cores ?? 0.5;
+        long cpuNano = (long)(cpuCores * 1_000_000_000);
+        RestartPolicyKind policyKind = instance.RestartPolicy.ToDockerKind();
+
+        var response = await _client.Containers.CreateContainerAsync(new CreateContainerParameters
+        {
+            Image = instance.Image,
+            Name = containerName,
+            Tty = true,
+            HostConfig = new HostConfig
+            {
+                PortBindings = new Dictionary<string, IList<PortBinding>>
+                {
+                    ["7777/udp"] = new List<PortBinding> { new PortBinding { HostPort = port.ToString() } }
+                },
+                Memory = memBytes,
+                MemorySwap = memBytes,
+                NanoCPUs = cpuNano,
+                AutoRemove = instance.AutoRemove,
+                RestartPolicy = new RestartPolicy { Name = policyKind }
+            }
+        });
+
+        await _client.Containers.StartContainerAsync(response.ID, null);
+
+        return response.ID;
+    }
+
+
+    public async Task<bool> RemoveContainerAsync(string containerId)
+    {
+        try
+        {
+            var container = await _client.Containers.InspectContainerAsync(containerId);
+
+            await _client.Containers.RemoveContainerAsync(containerId, new ContainerRemoveParameters
+            {
+                Force = true,
+                RemoveVolumes = true
+            });
+
+            return true;
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"❌ Failed to remove container {containerId}: {ex.Message}");
+            return false;
+        }
     }
 
     public List<string> ListAvailableTarImages()
@@ -114,86 +189,49 @@ public class DockerService : IContainerService
         return [.. Directory.GetFiles(imageDir, "*.tar").Select(Path.GetFileName)];
     }
 
-   public async Task<string> LoadImageAndStartContainerAsync(
-    string tarPath,
-    string containerBaseDir,
-    string? containerName = null,
-    int? hostPort = null,
-    int? ramMb = null,
-    double? cpuCores = null,
-    bool autoRemove = false,
-    string restartPolicy = "unless-stopped" )
+
+    public async Task<string?> LoadImageAsync(string tarPath)
     {
-        // 1. Load image from TAR file
-        using var stream = File.OpenRead(tarPath);
-        await _client.Images.LoadImageAsync(
-            new ImageLoadParameters { Quiet = true },
-            stream,
-            new Progress<JSONMessage>(),
-            CancellationToken.None
-        );
+        // 1. Get the image name from manifest.json
+        string? imageName = GetImageNameFromTar(tarPath);
+        if (imageName == null)
+            throw new Exception("Could not extract image name from TAR");
 
-        containerName ??= $"sm64_{Guid.NewGuid():N}".Substring(0, 12);
-
-        int port = hostPort ?? GetFreeUdpPort();
-        long memBytes = (ramMb ?? 512) * 1024L * 1024L;
-        long cpuNano = (long)((cpuCores ?? 0.5) * 1_000_000_000);
-
-        RestartPolicyKind policyKind = restartPolicy.ToLower() switch
-        {
-            "always" => RestartPolicyKind.Always,
-            "no" => RestartPolicyKind.No,
-            "unless-stopped" => RestartPolicyKind.UnlessStopped,
-            _ => RestartPolicyKind.No
-        };
-        var response = await _client.Containers.CreateContainerAsync(new CreateContainerParameters
-        {
-            Image = "sm64coopdx_server",
-            Name = containerName,
-            Tty = true,
-            HostConfig = new HostConfig
-            {
-                PortBindings = new Dictionary<string, IList<PortBinding>>
-                {
-                    ["7777/udp"] = new List<PortBinding> { new PortBinding { HostPort = port.ToString() } }
-                },
-                Memory = memBytes,
-                MemorySwap = memBytes,
-                NanoCPUs = cpuNano,
-                AutoRemove = autoRemove,
-                RestartPolicy = new RestartPolicy { Name = policyKind },
-                //RestartPolicy = new RestartPolicy { Name = RestartPolicyKind.UnlessStopped },
-            }
-        });
-
-        await _client.Containers.StartContainerAsync(response.ID, null);
-
-        return response.ID;
-    }
-
-
-    public async Task<bool> RemoveContainerAndCleanupAsync(string containerId)
-    {
+        // 2. Load the image
         try
         {
-            var container = await _client.Containers.InspectContainerAsync(containerId);
-            string containerName = container.Name.Trim('/');
-
-            await _client.Containers.RemoveContainerAsync(containerId, new ContainerRemoveParameters
-            {
-                Force = true,
-                RemoveVolumes = true
-            });
-
-            return true;
+            using var stream = File.OpenRead(tarPath);
+            await _client.Images.LoadImageAsync(
+                new ImageLoadParameters { Quiet = true },
+                stream,
+                new Progress<JSONMessage>(),
+                CancellationToken.None
+            );
         }
-        catch (DockerContainerNotFoundException)
+        catch (Exception ex)
         {
-            return false;
+            Console.WriteLine($"❌ Failed to load/read image: {ex.Message}");
         }
+
+        return imageName;
     }
 
+    private static string? GetImageNameFromTar(string tarPath)
+    {
+        using var stream = File.OpenRead(tarPath);
+        using var archive = TarArchive.Open(stream);
 
+        var manifestEntry = archive.Entries.FirstOrDefault(e => e.Key == "manifest.json");
+        if (manifestEntry == null) return null;
+
+        using var reader = new StreamReader(manifestEntry.OpenEntryStream());
+        var json = reader.ReadToEnd();
+
+        var doc = JsonDocument.Parse(json);
+        var repoTags = doc.RootElement[0].GetProperty("RepoTags");
+
+        return repoTags[0].GetString();
+    }
 
     private static int GetFreeUdpPort()
     {

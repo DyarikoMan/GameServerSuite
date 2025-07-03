@@ -4,6 +4,7 @@ public class ContainerInstance
 {
     public string Name { get; }
     public string Image { get; }
+    public int Port { get; }
     public RamSize Ram { get; }
     public CpuCount Cpu { get; }
     public RestartPolicyValue RestartPolicy { get; }
@@ -12,6 +13,7 @@ public class ContainerInstance
     public ContainerInstance(
         string name,
         string image,
+        int port,
         RamSize ram,
         CpuCount cpu,
         RestartPolicyValue restartPolicy,
@@ -19,6 +21,7 @@ public class ContainerInstance
     {
         Name = name;
         Image = image;
+        Port = port;
         Ram = ram;
         Cpu = cpu;
         RestartPolicy = restartPolicy;

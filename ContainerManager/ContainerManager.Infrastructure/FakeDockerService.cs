@@ -1,11 +1,12 @@
 ﻿using ContainerManager.Domain.Entities;
 using ContainerManager.Domain.Interfaces;
+using ContainerManager.Domain.ValueObjects;
 
 namespace ContainerManager.Infrastructure.Docker
 {
     public class FakeDockerService : IContainerService
     {
-        public Task<bool> StartContainerAsync(string containerId)
+        public Task<bool> ResumeContainerAsync(string containerId)
         {
             if (containerId == "fail")
             {
@@ -68,6 +69,42 @@ namespace ContainerManager.Infrastructure.Docker
 
             Console.WriteLine($"📦 [FakeDockerService] Returning {containers.Count} fake containers (filter: {imageFilter ?? "none"})");
             return Task.FromResult(containers);
+        }
+
+        public async Task<ContainerStats> GetContainerStatsAsync(string containerId)
+        {
+            // Simulate delay
+            await Task.Delay(100);
+
+            Console.WriteLine($"📊 [FakeDockerService] Returning stats for container: {containerId}");
+
+            return new ContainerStats
+            {
+                MemoryUsage = 150 * 1024 * 1024,        // 150 MB
+                MemoryLimit = 512 * 1024 * 1024,        // 512 MB
+                CpuTotalUsage = 1_000_000_000,          // 1s of CPU
+                CpuSystemUsage = 2_000_000_000,         // 2s of system CPU
+                CpuCores = 2,
+                NetworkRxBytes = 5_000_000,             // 5 MB received
+                NetworkTxBytes = 3_000_000              // 3 MB sent
+            };
+        }
+
+        public Task<string?> LoadImageAsync(string tarPath)
+        {
+            if (tarPath.EndsWith("sm64coopdx.tar"))
+                return Task.FromResult<string?>("sm64coopdx_server:latest");
+
+            if (tarPath.EndsWith("minecraft.tar"))
+                return Task.FromResult<string?>("minecraft_server:latest");
+
+            return Task.FromResult<string?>(null);
+        }
+
+        public Task<string> StartContainerAsync(ContainerInstance instance)
+        {
+            string fakeContainerId = $"started-container-{Guid.NewGuid()}";
+            return Task.FromResult(fakeContainerId);
         }
     }
 }
