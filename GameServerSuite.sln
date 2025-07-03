@@ -21,7 +21,7 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ImageManager.Application", 
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ImageManager.Infrastructure", "ImageManager\ImageService.Infrastructure\ImageManager.Infrastructure.csproj", "{3ECF34B3-6657-4FBD-B586-D6E17D0FB5F1}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ImageManager.Api", "ImageManager.Api\ImageManager.Api.csproj", "{7D89C4BA-91D0-476F-80CF-20FF9809674C}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ImageManager.Api", "ImageManager\ImageManager.Api\ImageManager.Api.csproj", "{7D89C4BA-91D0-476F-80CF-20FF9809674C}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
