@@ -1,0 +1,81 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio Version 17
+VisualStudioVersion = 17.0.31903.59
+MinimumVisualStudioVersion = 10.0.40219.1
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ContainerManager.Api", "ContainerManager\ContainerManager.Api\ContainerManager.Api.csproj", "{49FA9885-DC20-44BF-B384-56D9617E1610}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ContainerManager.Infrastructure", "ContainerManager\ContainerManager.Infrastructure\ContainerManager.Infrastructure.csproj", "{CAB2A3E6-D892-4D7C-A9F0-F9CF64B351B1}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ContainerManager.Domain", "ContainerManager\ContainerManager.Domain\ContainerManager.Domain.csproj", "{3E7446B9-7568-44CB-B07F-2A53EBC7979A}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ContainerManager.Application", "ContainerManager\ContainerManager.Application\ContainerManager.Application.csproj", "{2AB97140-AF6C-4FEE-B665-DEBCBF647000}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "ContainerService", "ContainerService", "{02EA681E-C7D8-13C7-8484-4AC65E1B71E8}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "ImageService", "ImageService", "{171FD242-E165-4BA9-93EB-C7E1921AC6C1}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ImageManager.Domain", "ImageManager\ImageService.Domain\ImageManager.Domain.csproj", "{0C20CC3F-BAAD-4256-A4AA-711E11234A62}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ImageManager.Application", "ImageManager\ImageService.Application\ImageManager.Application.csproj", "{B24CD6C8-CCCB-492F-A288-BA824DCC3D8A}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ImageManager.Infrastructure", "ImageManager\ImageService.Infrastructure\ImageManager.Infrastructure.csproj", "{3ECF34B3-6657-4FBD-B586-D6E17D0FB5F1}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ImageManager.Api", "ImageManager.Api\ImageManager.Api.csproj", "{7D89C4BA-91D0-476F-80CF-20FF9809674C}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Release|Any CPU = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{49FA9885-DC20-44BF-B384-56D9617E1610}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{49FA9885-DC20-44BF-B384-56D9617E1610}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{49FA9885-DC20-44BF-B384-56D9617E1610}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{49FA9885-DC20-44BF-B384-56D9617E1610}.Release|Any CPU.Build.0 = Release|Any CPU
+		{CAB2A3E6-D892-4D7C-A9F0-F9CF64B351B1}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{CAB2A3E6-D892-4D7C-A9F0-F9CF64B351B1}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{CAB2A3E6-D892-4D7C-A9F0-F9CF64B351B1}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{CAB2A3E6-D892-4D7C-A9F0-F9CF64B351B1}.Release|Any CPU.Build.0 = Release|Any CPU
+		{3E7446B9-7568-44CB-B07F-2A53EBC7979A}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{3E7446B9-7568-44CB-B07F-2A53EBC7979A}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{3E7446B9-7568-44CB-B07F-2A53EBC7979A}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{3E7446B9-7568-44CB-B07F-2A53EBC7979A}.Release|Any CPU.Build.0 = Release|Any CPU
+		{2AB97140-AF6C-4FEE-B665-DEBCBF647000}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{2AB97140-AF6C-4FEE-B665-DEBCBF647000}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{2AB97140-AF6C-4FEE-B665-DEBCBF647000}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{2AB97140-AF6C-4FEE-B665-DEBCBF647000}.Release|Any CPU.Build.0 = Release|Any CPU
+		{0C20CC3F-BAAD-4256-A4AA-711E11234A62}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{0C20CC3F-BAAD-4256-A4AA-711E11234A62}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{0C20CC3F-BAAD-4256-A4AA-711E11234A62}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{0C20CC3F-BAAD-4256-A4AA-711E11234A62}.Release|Any CPU.Build.0 = Release|Any CPU
+		{B24CD6C8-CCCB-492F-A288-BA824DCC3D8A}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{B24CD6C8-CCCB-492F-A288-BA824DCC3D8A}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{B24CD6C8-CCCB-492F-A288-BA824DCC3D8A}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{B24CD6C8-CCCB-492F-A288-BA824DCC3D8A}.Release|Any CPU.Build.0 = Release|Any CPU
+		{3ECF34B3-6657-4FBD-B586-D6E17D0FB5F1}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{3ECF34B3-6657-4FBD-B586-D6E17D0FB5F1}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{3ECF34B3-6657-4FBD-B586-D6E17D0FB5F1}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{3ECF34B3-6657-4FBD-B586-D6E17D0FB5F1}.Release|Any CPU.Build.0 = Release|Any CPU
+		{7D89C4BA-91D0-476F-80CF-20FF9809674C}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{7D89C4BA-91D0-476F-80CF-20FF9809674C}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{7D89C4BA-91D0-476F-80CF-20FF9809674C}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{7D89C4BA-91D0-476F-80CF-20FF9809674C}.Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(NestedProjects) = preSolution
+		{49FA9885-DC20-44BF-B384-56D9617E1610} = {02EA681E-C7D8-13C7-8484-4AC65E1B71E8}
+		{CAB2A3E6-D892-4D7C-A9F0-F9CF64B351B1} = {02EA681E-C7D8-13C7-8484-4AC65E1B71E8}
+		{3E7446B9-7568-44CB-B07F-2A53EBC7979A} = {02EA681E-C7D8-13C7-8484-4AC65E1B71E8}
+		{2AB97140-AF6C-4FEE-B665-DEBCBF647000} = {02EA681E-C7D8-13C7-8484-4AC65E1B71E8}
+		{0C20CC3F-BAAD-4256-A4AA-711E11234A62} = {171FD242-E165-4BA9-93EB-C7E1921AC6C1}
+		{B24CD6C8-CCCB-492F-A288-BA824DCC3D8A} = {171FD242-E165-4BA9-93EB-C7E1921AC6C1}
+		{3ECF34B3-6657-4FBD-B586-D6E17D0FB5F1} = {171FD242-E165-4BA9-93EB-C7E1921AC6C1}
+		{7D89C4BA-91D0-476F-80CF-20FF9809674C} = {171FD242-E165-4BA9-93EB-C7E1921AC6C1}
+	EndGlobalSection
+	GlobalSection(ExtensibilityGlobals) = postSolution
+		SolutionGuid = {8D162FA0-AB08-404A-8A21-91C6E7E43361}
+	EndGlobalSection
+EndGlobal

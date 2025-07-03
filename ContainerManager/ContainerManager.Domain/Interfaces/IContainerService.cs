@@ -9,7 +9,6 @@ public interface IContainerService
       Task<bool> StopContainerAsync(string containerId);
       Task<List<ContainerInfo>> ListContainersAsync(string imageFilter);
       Task<ContainerStats> GetContainerStatsAsync(string containerId);
-      Task<string?> LoadImageAsync(string tarPath);
       Task<string> StartContainerAsync(ContainerInstance instance);
       Task<bool> RemoveContainerAsync(string containerId);
 

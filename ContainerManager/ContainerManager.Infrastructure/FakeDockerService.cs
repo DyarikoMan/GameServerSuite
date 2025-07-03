@@ -106,5 +106,17 @@ namespace ContainerManager.Infrastructure.Docker
             string fakeContainerId = $"started-container-{Guid.NewGuid()}";
             return Task.FromResult(fakeContainerId);
         }
+
+        public Task<bool> RemoveContainerAsync(string containerId)
+        {
+            if (containerId == "fail")
+            {
+                Console.WriteLine("❌ [FakeDockerService] Simulated failure");
+                return Task.FromResult(false);
+            }
+
+            Console.WriteLine($"✅ [FakeDockerService] Would remove container {containerId}");
+            return Task.FromResult(true);
+        }
     }
 }

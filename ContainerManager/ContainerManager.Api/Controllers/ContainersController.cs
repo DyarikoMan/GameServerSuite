@@ -5,6 +5,7 @@ using ContainerManager.Application.Queries;
 using ContainerManager.Application.Queries.GetContainerStats;
 using ContainerManager.Domain.Interfaces;
 using ContainerManager.Infrastructure.Docker;
+using ImageManager.Application.Queries;
 using MediatR;
 using Microsoft.AspNetCore.Mvc;
 
@@ -92,12 +93,12 @@ namespace ContainerManager.Api.Controllers
             return Ok(new { ImageName = name });
         }
 
-        [HttpGet("images/files")]
-        public IActionResult GetImageFiles()
-        {
-            var imageFiles = _docker.ListAvailableTarImages();
-            return Ok(imageFiles);
-        }
+        //[HttpGet("images/files")]
+        //public IActionResult GetImageFiles()
+        //{
+        //    //var imageFiles = _docker.ListAvailableTarImages();
+        //    //return Ok(imageFiles);
+        //}
 
 
     }

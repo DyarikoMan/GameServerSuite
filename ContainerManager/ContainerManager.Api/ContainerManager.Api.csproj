@@ -13,6 +13,7 @@
   </ItemGroup>
 
   <ItemGroup>
+    <ProjectReference Include="..\..\ImageManager\ImageService.Application\ImageManager.Application.csproj" />
     <ProjectReference Include="..\ContainerManager.Infrastructure\ContainerManager.Infrastructure.csproj" />
     <ProjectReference Include="..\ContainerManager.Application\ContainerManager.Application.csproj" />
     <ProjectReference Include="..\ContainerManager.Domain\ContainerManager.Domain.csproj" />

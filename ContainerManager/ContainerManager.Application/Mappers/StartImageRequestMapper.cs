@@ -10,6 +10,7 @@ namespace ContainerManager.Application.Mappers
             return new ContainerInstance(
                 name: dto.Name,
                 image: dto.Image,
+                port: dto.Port,
                 ram: new RamSize(dto.RamMb),
                 cpu: new CpuCount(dto.Cpu),
                 restartPolicy: new RestartPolicyValue(dto.RestartPolicy),

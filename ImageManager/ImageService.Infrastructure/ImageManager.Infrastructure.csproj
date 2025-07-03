@@ -1,0 +1,20 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>net8.0</TargetFramework>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Docker.DotNet" Version="3.125.15" />
+    <PackageReference Include="SharpCompress" Version="0.40.0" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\..\ContainerManager\ContainerManager.Application\ContainerManager.Application.csproj" />
+    <ProjectReference Include="..\..\ContainerManager\ContainerManager.Domain\ContainerManager.Domain.csproj" />
+    <ProjectReference Include="..\ImageService.Domain\ImageManager.Domain.csproj" />
+  </ItemGroup>
+
+</Project>
