@@ -3,9 +3,7 @@ using ContainerManager.Application.Commands;
 using ContainerManager.Application.Dtos;
 using ContainerManager.Application.Queries;
 using ContainerManager.Application.Queries.GetContainerStats;
-using ContainerManager.Domain.Interfaces;
 using ContainerManager.Infrastructure.Docker;
-using ImageManager.Application.Queries;
 using MediatR;
 using Microsoft.AspNetCore.Mvc;
 
@@ -79,27 +77,5 @@ namespace ContainerManager.Api.Controllers
             var containerId = await _mediator.Send(new RemoveContainerCommand(id));
             return Ok(new { containerId });
         }
-
-        [HttpPost("load")]
-        public async Task<IActionResult> LoadImage([FromBody] string tarFile)
-        {
-            var imagesPath = Path.Combine(AppContext.BaseDirectory, "Resources", "Images");
-            var tarPath = Path.Combine(imagesPath, tarFile);
-
-            if (!System.IO.File.Exists(tarPath))
-                return NotFound($"TAR file not found: {tarFile}");
-
-            var name = await _mediator.Send(new LoadImageQuery(tarPath));
-            return Ok(new { ImageName = name });
-        }
-
-        //[HttpGet("images/files")]
-        //public IActionResult GetImageFiles()
-        //{
-        //    //var imageFiles = _docker.ListAvailableTarImages();
-        //    //return Ok(imageFiles);
-        //}
-
-
     }
 }

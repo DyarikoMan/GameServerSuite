@@ -8,7 +8,6 @@ namespace ContainerManager.Application.Dtos
 {
     public class StartContainerRequest
     {
-        public string TarFile { get; set; } = null!;
         public string Name { get; set; } = null!;
         public string Image { get; set; } = null; 
         public int RamMb { get; set; } = 512;
@@ -16,5 +15,9 @@ namespace ContainerManager.Application.Dtos
         public bool AutoRemove { get; set; } = true;
         public string RestartPolicy { get; set; } = "unless-stopped";
         public int Port { get; set; } = 0;
+        public int ContainerPort { get; set; } = 0;
+        public bool IsUdp { get; set; } = true;
+        public Dictionary<string, string> EnvironmentVariables { get; set; } = new();
+
     }
 }

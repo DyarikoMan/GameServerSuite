@@ -23,7 +23,7 @@ namespace ImageManager.Api
             });
 
 
-            #if DEBUG
+#if DEBUG
             builder.Services.AddScoped<IImageService, FakeImageService>();
 #else
             builder.Services.AddScoped<IImageService, ImageService>();

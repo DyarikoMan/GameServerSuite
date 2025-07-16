@@ -3,6 +3,7 @@ using Docker.DotNet;
 using Docker.DotNet.Models;
 using SharpCompress.Archives.Tar;
 using System.Text.Json;
+using Microsoft.Extensions.Configuration;
 
 namespace ImageManager.Infrastructure
 {
@@ -10,9 +11,12 @@ namespace ImageManager.Infrastructure
     {
         private readonly DockerClient _client;
 
-        public ImageService()
+        public ImageService(IConfiguration configuration)
         {
-            _client = new DockerClientConfiguration(new Uri("unix:///var/run/docker.sock")).CreateClient();
+            var dockerHost = configuration["Docker:Host"]
+                         ?? "unix:///var/run/docker.sock";
+
+            _client = new DockerClientConfiguration(new Uri(dockerHost)).CreateClient();
         }
 
         public List<string> ListAvailableTarImages()
@@ -70,5 +74,34 @@ namespace ImageManager.Infrastructure
 
             return repoTags[0].GetString();
         }
+
+        //public async Task<bool> ExportImageToTarAsync(string imageNameOrId, string tarOutputPath)
+        //{
+        //    try
+        //    {
+        //        // Ensure the output folder exists
+        //        var dir = Path.GetDirectoryName(tarOutputPath);
+        //        if (!string.IsNullOrEmpty(dir))
+        //            Directory.CreateDirectory(dir);
+
+        //        // Save the image to the .tar file
+        //        using var fileStream = File.Create(tarOutputPath);
+        //        await _client.Images.GetImageAsync(
+        //            imageNameOrId,
+        //            new ImageGetParameters(), // empty is fine
+        //            fileStream,
+        //            CancellationToken.None
+        //        );
+
+        //        Console.WriteLine($"📦 Exported image '{imageNameOrId}' to: {tarOutputPath}");
+        //        return true;
+        //    }
+        //    catch (Exception ex)
+        //    {
+        //        Console.WriteLine($"❌ Failed to export image '{imageNameOrId}': {ex.Message}");
+        //        return false;
+        //    }
+        //}
+
     }
 }

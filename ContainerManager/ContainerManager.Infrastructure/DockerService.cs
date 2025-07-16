@@ -4,10 +4,9 @@ using ContainerManager.Domain.ValueObjects;
 using ContainerManager.Infrastructure.Docker.Mappers;
 using Docker.DotNet;
 using Docker.DotNet.Models;
-using SharpCompress.Archives.Tar;
 using System.Net;
 using System.Net.Sockets;
-using System.Text.Json;
+using Microsoft.Extensions.Configuration;
 
 
 namespace ContainerManager.Infrastructure.Docker;
@@ -16,9 +15,12 @@ public class DockerService : IContainerService
 {
     private readonly DockerClient _client;
 
-    public DockerService()
+    public DockerService(IConfiguration configuration)
     {
-        _client = new DockerClientConfiguration(new Uri("unix:///var/run/docker.sock")).CreateClient();
+        var dockerHost = configuration["Docker:Host"]
+                         ?? "unix:///var/run/docker.sock"; 
+
+        _client = new DockerClientConfiguration(new Uri(dockerHost)).CreateClient();
     }
 
     public async Task<bool> ResumeContainerAsync(string containerId)
@@ -124,22 +126,40 @@ public class DockerService : IContainerService
     {
         var containerName = instance.Name;
         int port = instance.Port == 0 ? GetFreeUdpPort() : instance.Port;
+        int containerPort = instance.ContainerPort == 0 ? GetFreeUdpPort() : instance.ContainerPort;
+        string protocol = instance.IsUdp ? "udp" : "tcp";
         int ramMb = instance.Ram?.ValueInMb ?? 512;
         long memBytes = ramMb * 1024L * 1024L;
         double cpuCores = instance.Cpu?.Cores ?? 0.5;
         long cpuNano = (long)(cpuCores * 1_000_000_000);
         RestartPolicyKind policyKind = instance.RestartPolicy.ToDockerKind();
 
+        var volumeName = $"{containerName}-data";
+
         var response = await _client.Containers.CreateContainerAsync(new CreateContainerParameters
         {
             Image = instance.Image,
             Name = containerName,
             Tty = true,
+            Env = instance.EnvironmentVariables.Select(kv => $"{kv.Key}={kv.Value}").ToList(),
             HostConfig = new HostConfig
             {
+                Mounts = new List<Mount>
+                {
+                    new Mount
+                    {
+                        Type = "volume",
+                        Source = volumeName,
+                        Target = "/data"
+                    }
+                },
+                //Binds = new List<string>
+                //{
+                //    $"{hostVolumePath}:/data"
+                //},
                 PortBindings = new Dictionary<string, IList<PortBinding>>
                 {
-                    ["7777/udp"] = new List<PortBinding> { new PortBinding { HostPort = port.ToString() } }
+                    [containerPort+"/"+protocol] = new List<PortBinding> { new PortBinding { HostPort = port.ToString() } }
                 },
                 Memory = memBytes,
                 MemorySwap = memBytes,
@@ -161,11 +181,20 @@ public class DockerService : IContainerService
         {
             var container = await _client.Containers.InspectContainerAsync(containerId);
 
+            string containerName = container.Name?.TrimStart('/'); 
+
             await _client.Containers.RemoveContainerAsync(containerId, new ContainerRemoveParameters
             {
                 Force = true,
                 RemoveVolumes = true
             });
+
+            var volumes = await _client.Volumes.ListAsync();
+            if (volumes.Volumes.Any(v => v.Name == $"{containerName}-data"))
+            {
+                await _client.Volumes.RemoveAsync($"{containerName}-data", force: true);
+                Console.WriteLine($"🗑️ Deleted volume: {containerName}-data");
+            }
 
             return true;
         }
